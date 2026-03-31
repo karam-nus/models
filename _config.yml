@@ -1,0 +1,40 @@
+title: "Model Architectures — A Visual History"
+description: "Comprehensive documentation of LLM architecture evolution across generations"
+baseurl: "/models"
+url: "https://karam-nus.github.io"
+
+markdown: kramdown
+highlighter: rouge
+
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: "highlight"
+    span:
+      line_numbers: false
+    block:
+      line_numbers: false
+
+plugins:
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: false
+
+include:
+  - README.md
+
+navigation:
+  - title: "Home"
+    url: "/"
+  - title: "01 — Qwen"
+    url: "/01_Qwen"
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: "default"
