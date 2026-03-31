@@ -7,3 +7,4 @@ vendor/
 .bundle/
 ./plan.md
 ./prompt.md
+./temp/
