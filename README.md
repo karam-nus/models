@@ -15,10 +15,10 @@
 | 01 | [**Qwen**](01_Qwen.md) | 1 → 1.5 → 2 → 2.5 → 3 | ✅ Complete |
 | 02 | [**Llama**](02_Llama.md) | 1 → 2 → 3 → 3.1 → 3.2 → 3.3 → 4 | ✅ Complete |
 | 03 | DeepSeek | V1 → V2 → V3 → R1 | 🔜 Planned |
-| 04 | [**Gemma**](04_Gemma.md) | 1 → 2 → 3 | ✅ Complete |
+| 04 | [**Gemma**](04_Gemma.md) | 1 → 2 → 3 → 4 | ✅ Complete |
 | 05 | Mistral | 7B → Mixtral → Large | 🔜 Planned |
 | 06 | Phi | 1 → 1.5 → 2 → 3 → 4 | 🔜 Planned |
-| 07 | [**Alpamayo**](07_Alpamayo.md) | R1 (VLA) | ✅ Complete |
+| 07 | [**Alpamayo**](07_Alpamayo.md) | R1 → 1.5 (VLA) | ✅ Complete |
 
 ---
 
