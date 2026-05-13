@@ -5,12 +5,12 @@ title: "Gemma — Model Architecture Across Generations"
 <h1 align="center">🔵 Gemma — Model Architecture Across Generations</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Versions_Covered-3-0EA5E9?style=for-the-badge" alt="Versions: 3"/>
+  <img src="https://img.shields.io/badge/Versions_Covered-4-0EA5E9?style=for-the-badge" alt="Versions: 4"/>
   <img src="https://img.shields.io/badge/Team-Google_DeepMind-0284C7?style=for-the-badge" alt="Team: Google DeepMind"/>
-  <img src="https://img.shields.io/badge/Last_Updated-March_2025-0369A1?style=for-the-badge" alt="Updated: March 2025"/>
+  <img src="https://img.shields.io/badge/Last_Updated-April_2026-4F46E5?style=for-the-badge" alt="Updated: April 2026"/>
 </p>
 
-<p align="center"><i>From Google DeepMind's first open-weight Gemini descendant to a multilingual multimodal family — tracing three generations of architecture innovation.</i></p>
+<p align="center"><i>From Google DeepMind's first open-weight Gemini descendant to a fully Apache-licensed multimodal family — tracing four generations of architecture innovation.</i></p>
 
 ---
 
@@ -23,17 +23,19 @@ title: "Gemma — Model Architecture Across Generations"
 - [Gemma 1 (February 2024)](#-gemma-1--february-2024)
 - [Gemma 2 (June 2024)](#-gemma-2--june-2024)
 - [Gemma 3 (March 2025)](#-gemma-3--march-2025)
+- [Gemma 4 (April 2026)](#-gemma-4--april-2026)
 - [References](#-references)
 
 ---
 
 ## 📋 Executive Summary
 
-This document covers **three generations** of the Gemma large language model family developed by Google DeepMind:
+This document covers **four generations** of the Gemma large language model family developed by Google DeepMind:
 
 - **Gemma 1** — The foundation: decoder-only Transformer distilled from Gemini, GeGLU activation, logit soft-capping, 256K BPE vocab, 6T tokens, 2B & 7B sizes
 - **Gemma 2** — Architecture leap: alternating Sliding Window + Global attention, knowledge distillation from 27B teacher, double normalization, GQA for all sizes, 8K context
 - **Gemma 3** — Multimodal expansion: SigLIP vision encoder, 128K long context, hybrid 5:1 local/global attention ratio, 256K vocab, 140+ languages, QAT support
+- **Gemma 4** — Open-weight frontier: Apache 2.0 license, MoE variant (26B A4B), Per-Layer Embeddings (E2B/E4B), SigLIP 2 vision + native audio (E2B/E4B), 256K context, thinking mode, agentic tool use
 
 > **📝 Note:** The Gemma family also includes specialized variants — **CodeGemma** (code generation), **PaliGemma** (vision-language), **RecurrentGemma** (linear recurrent), and **ShieldGemma** (safety classifier) — which are documented separately. This document focuses on the core Gemma LLM architecture.
 
@@ -48,6 +50,7 @@ This document covers **three generations** of the Gemma large language model fam
 | <img src="https://img.shields.io/badge/Gemma_1-Feb_2024-0EA5E9" alt="Gemma 1"/> | Feb 21, 2024 | [arXiv:2403.08295](https://arxiv.org/abs/2403.08295) | 7B | 6T | 8K | First open Gemini-based model |
 | <img src="https://img.shields.io/badge/Gemma_2-Jun_2024-0284C7" alt="Gemma 2"/> | Jun 27, 2024 | [arXiv:2408.00118](https://arxiv.org/abs/2408.00118) | 27B | 13T | 8K | SWA + Global attn + KD |
 | <img src="https://img.shields.io/badge/Gemma_3-Mar_2025-0369A1" alt="Gemma 3"/> | Mar 12, 2025 | [arXiv:2503.19786](https://arxiv.org/abs/2503.19786) | 27B | 12T | 128K | Multimodal + 140 languages |
+| <img src="https://img.shields.io/badge/Gemma_4-Apr_2026-4F46E5" alt="Gemma 4"/> | Apr 2, 2026 | [Model Card](https://ai.google.dev/gemma/docs/core/model_card_4) · [Blog](https://opensource.googleblog.com/2026/04/gemma-4-expanding-gemmaverse-apache-2.html) | 31B | — | 256K | Apache 2.0 · MoE · PLE · Audio · Thinking |
 
 </div>
 
@@ -57,18 +60,18 @@ This document covers **three generations** of the Gemma large language model fam
 
 > Numbers reflect the best comparable model size across generations. Sources: official technical papers.
 
-| Benchmark | Gemma 1 (7B) | Gemma 2 (9B) | Gemma 2 (27B) | Gemma 3 (12B) | Gemma 3 (27B) |
-|:----------|:---:|:---:|:---:|:---:|:---:|
-| **MMLU** | 64.3 | 71.3 | 75.2 | 74.0 | 81.0 |
-| **HumanEval** | 32.3 | 40.2 | 51.8 | 57.9 | 69.7 |
-| **MATH** | 24.3 | 36.7 | 42.4 | 43.3 | 67.6 |
-| **GSM8K** | 46.4 | 68.6 | 74.0 | 79.6 | 89.7 |
-| **Context Length** | 8K | 8K | 8K | 128K | 128K |
-| **Training Tokens** | 6T | 8T | 13T | 12T | 12T |
-| **Multimodal** | ❌ | ❌ | ❌ | ✅ | ✅ |
-| **Vocabulary** | 256,128 | 256,128 | 256,128 | 262,144 | 262,144 |
+| Benchmark | Gemma 1 (7B) | Gemma 2 (9B) | Gemma 2 (27B) | Gemma 3 (12B) | Gemma 3 (27B) | Gemma 4 (26B MoE) | Gemma 4 (31B) |
+|:----------|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **MMLU** | 64.3 | 71.3 | 75.2 | 74.0 | 81.0 | 82.6 | 85.2 |
+| **HumanEval** | 32.3 | 40.2 | 51.8 | 57.9 | 69.7 | ~87.0 | 91.4 |
+| **MATH** | 24.3 | 36.7 | 42.4 | 43.3 | 67.6 | ~88.0 | 92.1 |
+| **GSM8K** | 46.4 | 68.6 | 74.0 | 79.6 | 89.7 | 88.4 | 91.2 |
+| **Context Length** | 8K | 8K | 8K | 128K | 128K | 256K | 256K |
+| **Training Tokens** | 6T | 8T | 13T | 12T | 12T | — | — |
+| **Multimodal** | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ (img) | ✅ (img) |
+| **Vocabulary** | 256,128 | 256,128 | 256,128 | 262,144 | 262,144 | 262,144 | 262,144 |
 
-<sub>*All base-model benchmark numbers sourced directly from official Gemma technical reports. Instruct models typically score higher.</sub>
+<sub>*Gemma 1–3 base-model numbers sourced from official technical reports. Gemma 4 numbers are instruct-model results from the official model card and Google Open Source blog (Apr 2026). MMLU column for Gemma 4 reflects MMLU Pro. HumanEval/MATH for Gemma 4 26B MoE are approximate ranges from multiple evaluations.</sub>
 
 ---
 
@@ -91,6 +94,7 @@ This document covers **three generations** of the Gemma large language model fam
       <span style="background: #0EA5E9; color: white; padding: 3px 10px; border-radius: 12px;">🔵 Gemma 1</span>
       <span style="background: #0284C7; color: white; padding: 3px 10px; border-radius: 12px;">🔷 Gemma 2</span>
       <span style="background: #0369A1; color: white; padding: 3px 10px; border-radius: 12px;">🟦 Gemma 3</span>
+      <span style="background: #4F46E5; color: white; padding: 3px 10px; border-radius: 12px;">🟪 Gemma 4</span>
     </div>
 
     <!-- Input Layer -->
@@ -101,8 +105,14 @@ This document covers **three generations** of the Gemma large language model fam
 
     <!-- Vision Input (Gemma 3 only) -->
     <div style="background: #0369A1; color: white; padding: 10px 16px; border-radius: 8px; margin-bottom: 8px; text-align: center; font-size: 13px;">
-      <strong>SigLIP Vision Encoder</strong> <span style="opacity: 0.7;">(Gemma 3 only)</span>
+      <strong>SigLIP Vision Encoder</strong> <span style="opacity: 0.7;">(Gemma 3) / SigLIP 2 (Gemma 4)</span>
       <div style="font-size: 11px; opacity: 0.85; margin-top: 4px;">ViT-based, 896×896px, Pan &amp; Scan multi-crop → 256 soft image tokens interleaved with text</div>
+    </div>
+
+    <!-- Audio Input (Gemma 4 E2B/E4B only) -->
+    <div style="background: #4F46E5; color: white; padding: 10px 16px; border-radius: 8px; margin-bottom: 8px; text-align: center; font-size: 13px;">
+      <strong>Audio Encoder</strong> <span style="opacity: 0.7;">(Gemma 4 E2B / E4B only)</span>
+      <div style="font-size: 11px; opacity: 0.85; margin-top: 4px;">Native audio input; audio tokens interleaved with text tokens in the decoder</div>
     </div>
 
     <div style="text-align: center; font-size: 20px; color: #7DD3FC;">↓</div>
@@ -137,6 +147,12 @@ This document covers **three generations** of the Gemma large language model fam
           <span style="background: #0369A1; color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px;"><strong>5:1</strong> local/global ratio</span>
           <span style="background: #0369A1; color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px;"><strong>128K</strong> context</span>
         </div>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
+          <span style="background: #4F46E5; color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px;"><strong>p-RoPE</strong> p=0.25 (256K ctx)</span>
+          <span style="background: #4F46E5; color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px;"><strong>K=V trick</strong> (global attn)</span>
+          <span style="background: #4F46E5; color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px;"><strong>Shared KV cache</strong></span>
+        </div>
       </div>
 
       <!-- Residual -->
@@ -157,6 +173,7 @@ This document covers **three generations** of the Gemma large language model fam
         </div>
 
         <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <span style="background: #4F46E5; color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px;"><strong>MoE</strong> 128+1 experts, top-8 (Gemma 4 26B)</span>
           <span style="background: #6B7280; color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px; opacity: 0.8;">GeGLU retained across all generations</span>
         </div>
       </div>
@@ -181,6 +198,7 @@ This document covers **three generations** of the Gemma large language model fam
       <div style="font-size: 11px; opacity: 0.85; margin-top: 4px;">
         <span style="background: #0369A1; padding: 2px 6px; border-radius: 4px; font-size: 10px;">Multimodal output (Gemma 3)</span>
         <span style="background: #0284C7; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 4px;">KD from 27B teacher (Gemma 2)</span>
+        <span style="background: #4F46E5; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-left: 4px;">Thinking mode / tool use (Gemma 4)</span>
       </div>
     </div>
 
@@ -659,6 +677,177 @@ This document covers **three generations** of the Gemma large language model fam
 
 ---
 
+## 🟪 Gemma 4 — April 2026
+
+{::nomarkdown}
+<div style="display: inline-block; background: #4F46E5; color: white; padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-bottom: 12px;">
+  📅 Released: April 2, 2026 &nbsp;|&nbsp; 📄 <a href="https://ai.google.dev/gemma/docs/core/model_card_4" style="color: #C7D2FE;">Model Card</a> &nbsp;|&nbsp; 🔗 <a href="https://opensource.googleblog.com/2026/04/gemma-4-expanding-gemmaverse-apache-2.html" style="color: #C7D2FE;">Google Open Source Blog</a>
+</div>
+{:/nomarkdown}
+
+### Summary
+
+- **Historic license change to Apache 2.0**: for the first time in the Gemma family, all four Gemma 4 model variants are released under the fully permissive **Apache 2.0 license** — replacing the custom Gemma Terms of Use from all previous generations — enabling unrestricted commercial use, fine-tuning, redistribution, and enterprise deployment without additional agreements
+- **Four-model family spanning from on-device to workstation**: **E2B** (~2.3B effective / 5.1B total), **E4B** (~4.5B effective / 8B total), **26B A4B** (Mixture-of-Experts, ~4B active / 25.2B total), and **31B** dense — covering the full deployment spectrum from smartphones to data center GPUs
+- **Mixture-of-Experts (MoE) architecture in the 26B A4B**: introduces Gemma's first MoE model, with **128 regular experts plus 1 shared expert** per MoE layer, routing **8 experts per token** — enabling near-27B-quality output at roughly 4B-equivalent inference cost
+- **Per-Layer Embeddings (PLE) for E2B and E4B**: instead of a single shared embedding table, each transformer layer has its own lightweight embedding lookup (PLE dimensions: vocab × 256 × n_layers), injected after each attention/FFN block — enabling very high intelligence-per-parameter on edge hardware; PLE tables are designed to reside in flash memory rather than VRAM
+- **Native audio input for E2B and E4B**: the smallest two models accept audio tokens directly (in addition to text and images), making Gemma 4 the first core Gemma generation with audio-native edge models
+- **Upgraded SigLIP 2 vision encoder** across all model sizes: variable-resolution tile processing (up to 896×896 per tile, multi-tile per prompt) — building on Gemma 3's SigLIP backbone with improved alignment training
+- **Thinking mode** via a `<|think|>` special token: models can be prompted to produce step-by-step chain-of-thought reasoning traces before the final answer, enabling stronger performance on math and reasoning benchmarks without a separate reasoning model
+- **Agentic capabilities**: native support for function calling, tool use, planning, and system prompts (`<|system|>` role), enabling Gemma 4 models as drop-in agents in orchestration frameworks
+- **Context window extends to 256K tokens** for 26B A4B and 31B models (128K for E2B/E4B) — up from 128K in Gemma 3's largest models — enabled by Proportional RoPE (p-RoPE)
+- **Hybrid local/global attention continues the Gemma 3 5:1 pattern** with refinements: local window shrinks to **512 tokens** for E2B (4 local + 1 global per block) and **1,024 tokens** for 26B/31B (5:1); global layers use the **K=V trick** (Keys = Values, halving KV cache at those layers) and **Shared KV Cache** (last N layers reuse K/V from previous same-type layers)
+- **Proportional RoPE (p-RoPE)**: for long-context (256K) global attention layers, only a fraction p=0.25 of the RoPE coordinate pairs receive positional encoding — limiting positional noise in long sequences while preserving semantic tracking
+- **GQA pattern refined**: local layers use 2 Q heads per 1 KV head; global layers can use up to 8 Q heads per 1 KV head — further reducing KV cache memory
+- **MMLU Pro 85.2% (31B)** — state-of-the-art among Apache 2.0 open models at launch, outperforming Llama 4 Scout and Qwen 3 32B on several reasoning benchmarks; MATH 500 92.1% (31B); HumanEval 91.4% (31B)
+
+### Architecture Diagram — Gemma 4
+
+{::nomarkdown}
+<div style="max-width: 750px; margin: 1.5em auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+  <div style="background: #4F46E5; color: white; padding: 14px 20px; border-radius: 10px 10px 0 0; text-align: center; font-weight: 700;">
+    Gemma 4 — Multi-Modal Architecture with MoE, PLE, and Long Context
+  </div>
+  <div style="background: #F5F3FF; border: 2px solid #A5B4FC; border-top: none; border-radius: 0 0 10px 10px; padding: 20px;">
+
+    <!-- Inputs row -->
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+      <div style="flex: 1; min-width: 120px; border: 2px solid #4F46E5; border-radius: 8px; padding: 10px; background: white; text-align: center; font-size: 11px; color: #4F46E5;">
+        <strong>Text Tokens</strong><br/>All variants<br/>262,144 vocab
+      </div>
+      <div style="flex: 1; min-width: 120px; border: 2px solid #4F46E5; border-radius: 8px; padding: 10px; background: white; text-align: center; font-size: 11px; color: #4F46E5;">
+        <strong>SigLIP 2 Vision</strong><br/>All variants<br/>896×896 multi-tile
+      </div>
+      <div style="flex: 1; min-width: 120px; border: 2px solid #4F46E5; border-radius: 8px; padding: 10px; background: #EEF2FF; text-align: center; font-size: 11px; color: #4F46E5;">
+        <strong>Audio</strong><br/>E2B / E4B only<br/>native audio tokens
+      </div>
+    </div>
+
+    <!-- PLE block (E models) -->
+    <div style="border: 2px solid #4F46E5; border-radius: 8px; padding: 12px; background: white; margin-bottom: 12px; position: relative;">
+      <div style="position: absolute; top: -10px; right: 12px; background: #4F46E5; color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600;">✨ NEW: PLE (E2B / E4B)</div>
+      <div style="font-weight: 700; color: #4F46E5; margin-bottom: 8px; font-size: 13px;">Per-Layer Embeddings (PLE)</div>
+      <div style="font-size: 12px; color: #374151; line-height: 1.5;">Each transformer layer fetches a layer-specific token embedding from a flash-resident PLE table (vocab × 256 × n_layers) and injects it after attention/FFN via a lightweight residual block — boosting intelligence-per-parameter on edge hardware without increasing active VRAM requirements.</div>
+    </div>
+
+    <!-- Hybrid attention with p-RoPE -->
+    <div style="border: 2px solid #4F46E5; border-radius: 8px; padding: 12px; background: white; margin-bottom: 12px; position: relative;">
+      <div style="position: absolute; top: -10px; right: 12px; background: #4F46E5; color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600;">✨ 5:1 + K=V + Shared KV</div>
+      <div style="font-weight: 700; color: #4F46E5; margin-bottom: 8px; font-size: 13px;">Hybrid Attention (5 Local + 1 Global) with Memory Optimizations</div>
+      <div style="display: flex; gap: 4px; flex-wrap: nowrap; margin-bottom: 8px; overflow-x: auto;">
+        <div style="flex: 1; min-width: 55px; background: #DBEAFE; border: 1px solid #93C5FD; padding: 6px; border-radius: 6px; text-align: center; font-size: 11px; color: #1E40AF;">
+          <strong>SWA</strong><br/>Local<br/>win=1K
+        </div>
+        <div style="flex: 1; min-width: 55px; background: #DBEAFE; border: 1px solid #93C5FD; padding: 6px; border-radius: 6px; text-align: center; font-size: 11px; color: #1E40AF;">
+          <strong>SWA</strong><br/>Local<br/>win=1K
+        </div>
+        <div style="flex: 1; min-width: 55px; background: #DBEAFE; border: 1px solid #93C5FD; padding: 6px; border-radius: 6px; text-align: center; font-size: 11px; color: #1E40AF;">
+          <strong>SWA</strong><br/>Local<br/>win=1K
+        </div>
+        <div style="flex: 1; min-width: 55px; background: #DBEAFE; border: 1px solid #93C5FD; padding: 6px; border-radius: 6px; text-align: center; font-size: 11px; color: #1E40AF;">
+          <strong>SWA</strong><br/>Local<br/>win=1K
+        </div>
+        <div style="flex: 1; min-width: 55px; background: #DBEAFE; border: 1px solid #93C5FD; padding: 6px; border-radius: 6px; text-align: center; font-size: 11px; color: #1E40AF;">
+          <strong>SWA</strong><br/>Local<br/>win=1K
+        </div>
+        <div style="flex: 1; min-width: 55px; background: #4F46E5; color: white; padding: 6px; border-radius: 6px; text-align: center; font-size: 11px;">
+          <strong>Global</strong><br/>K=V trick<br/>Shared KV
+        </div>
+        <div style="display: flex; align-items: center; font-size: 14px; color: #6B7280; padding: 0 4px;">...</div>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px;">
+        <div style="background: #DBEAFE; color: #1E40AF; padding: 5px 10px; border-radius: 4px;">🔵 5× Local SWA: GQA 2:1 Q/KV, fast</div>
+        <div style="background: #4F46E5; color: white; padding: 5px 10px; border-radius: 4px;">🟪 1× Global: K=V, Shared KV, p-RoPE (p=0.25 for 256K)</div>
+      </div>
+    </div>
+
+    <!-- MoE block -->
+    <div style="border: 2px solid #4F46E5; border-radius: 8px; padding: 12px; background: white; margin-bottom: 12px; position: relative;">
+      <div style="position: absolute; top: -10px; right: 12px; background: #4F46E5; color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600;">✨ NEW: MoE (26B A4B)</div>
+      <div style="font-weight: 700; color: #4F46E5; margin-bottom: 8px; font-size: 13px;">Mixture-of-Experts FFN (26B A4B only)</div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px; align-items: center;">
+        <div style="background: #EEF2FF; border: 1px solid #A5B4FC; padding: 8px 12px; border-radius: 6px; text-align: center; flex: 1; min-width: 100px;">
+          <strong>128 experts</strong><br/>+ 1 shared
+        </div>
+        <div style="font-size: 18px; color: #4F46E5;">→</div>
+        <div style="background: #4F46E5; color: white; padding: 8px 12px; border-radius: 6px; text-align: center; flex: 1; min-width: 100px;">
+          <strong>Top-8 routing</strong><br/>per token
+        </div>
+        <div style="font-size: 18px; color: #4F46E5;">→</div>
+        <div style="background: #EEF2FF; border: 1px solid #A5B4FC; padding: 8px 12px; border-radius: 6px; text-align: center; flex: 1; min-width: 100px;">
+          ~4B active<br/>25.2B total
+        </div>
+      </div>
+    </div>
+
+    <!-- Context / sizing stats -->
+    <div style="background: white; border: 1px solid #A5B4FC; border-radius: 8px; padding: 12px;">
+      <div style="font-weight: 600; color: #4F46E5; margin-bottom: 6px; font-size: 13px;">📐 Model Size Configurations</div>
+      <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+        <tr style="background: #EEF2FF;">
+          <th style="padding: 5px 6px; text-align: left; border-bottom: 1px solid #A5B4FC;">Model</th>
+          <th style="padding: 5px 6px; text-align: center; border-bottom: 1px solid #A5B4FC;">Layers</th>
+          <th style="padding: 5px 6px; text-align: center; border-bottom: 1px solid #A5B4FC;">Effective Params</th>
+          <th style="padding: 5px 6px; text-align: center; border-bottom: 1px solid #A5B4FC;">Context</th>
+          <th style="padding: 5px 6px; text-align: center; border-bottom: 1px solid #A5B4FC;">Modalities</th>
+          <th style="padding: 5px 6px; text-align: center; border-bottom: 1px solid #A5B4FC;">PLE/MoE</th>
+        </tr>
+        <tr><td style="padding: 4px 6px;">Gemma 4 E2B</td><td style="padding: 4px 6px; text-align: center;">35</td><td style="padding: 4px 6px; text-align: center;">~2.3B (5.1B total)</td><td style="padding: 4px 6px; text-align: center;">128K</td><td style="padding: 4px 6px; text-align: center;">Text + Image + Audio</td><td style="padding: 4px 6px; text-align: center;">PLE</td></tr>
+        <tr style="background: #F5F3FF;"><td style="padding: 4px 6px;">Gemma 4 E4B</td><td style="padding: 4px 6px; text-align: center;">42</td><td style="padding: 4px 6px; text-align: center;">~4.5B (8B total)</td><td style="padding: 4px 6px; text-align: center;">128K</td><td style="padding: 4px 6px; text-align: center;">Text + Image + Audio</td><td style="padding: 4px 6px; text-align: center;">PLE</td></tr>
+        <tr><td style="padding: 4px 6px;">Gemma 4 26B A4B</td><td style="padding: 4px 6px; text-align: center;">—</td><td style="padding: 4px 6px; text-align: center;">~4B active (25.2B total)</td><td style="padding: 4px 6px; text-align: center;">256K</td><td style="padding: 4px 6px; text-align: center;">Text + Image</td><td style="padding: 4px 6px; text-align: center;">MoE (128+1 exp, top-8)</td></tr>
+        <tr style="background: #F5F3FF;"><td style="padding: 4px 6px;">Gemma 4 31B</td><td style="padding: 4px 6px; text-align: center;">—</td><td style="padding: 4px 6px; text-align: center;">30.7B dense</td><td style="padding: 4px 6px; text-align: center;">256K</td><td style="padding: 4px 6px; text-align: center;">Text + Image</td><td style="padding: 4px 6px; text-align: center;">Dense</td></tr>
+      </table>
+    </div>
+
+  </div>
+</div>
+{:/nomarkdown}
+
+### Community Perspective
+
+- **The Apache 2.0 license change was the biggest headline**: the developer community immediately highlighted this as a watershed moment for Google's open-source AI strategy — previous Gemma generations used a custom Terms of Use that prohibited certain commercial uses, and many organizations had avoided Gemma for that reason
+- **MoE in the 26B A4B was welcomed as a practical breakthrough**: running a 25B-parameter model at 4B inference cost on consumer hardware made Gemma 4 immediately accessible to individual researchers with a single 16–18 GB GPU — previously a workstation-class requirement
+- **Per-Layer Embeddings (PLE) generated significant interest**: the idea of offloading per-layer token embeddings to flash memory as a way to dramatically boost intelligence-per-active-parameter was novel and sparked architectural discussions across the ML community
+- **Thinking mode adoption was rapid**: the `<|think|>` token mechanism was straightforward to use via standard chat templates, and benchmarks quickly showed 5–10% gains on AIME and LiveCodeBench when thinking was enabled — making it a go-to feature for technical users
+- **Audio support in edge models (E2B/E4B)** was noted as a significant practical advantage for mobile and IoT voice applications, though the community awaited more detailed audio benchmark comparisons
+- **The K=V trick and Shared KV Cache** were praised by inference engineers as elegant solutions to KV cache memory pressure in long-context scenarios, reducing global attention memory overhead by up to 50%
+- **AIME 2026 ~89.2%** was the standout math benchmark result, placing Gemma 4 31B above many closed models on competition-level mathematics — validating the thinking mode + improved pre-training
+- **Comparison to Llama 4**: the community broadly assessed Gemma 4 as competing favorably with Llama 4 Scout (active parameter count) and Llama 4 Maverick for reasoning-heavy tasks, while the Apache 2.0 license gave Gemma 4 an advantage in enterprise adoption settings
+
+### Model Variants
+
+| Model | Effective Params | Total Params | Layers | Context | Modalities | License | Architecture |
+|:------|:---------------:|:----------:|:------:|:-------:|:----------:|:-------:|:------------|
+| Gemma4-E2B | ~2.3B | 5.1B | 35 | 128K | Text + Image + Audio | Apache 2.0 | Dense + PLE |
+| Gemma4-E2B-IT | ~2.3B | 5.1B | 35 | 128K | Text + Image + Audio | Apache 2.0 | Dense + PLE + SFT/RLHF |
+| Gemma4-E4B | ~4.5B | 8B | 42 | 128K | Text + Image + Audio | Apache 2.0 | Dense + PLE |
+| Gemma4-E4B-IT | ~4.5B | 8B | 42 | 128K | Text + Image + Audio | Apache 2.0 | Dense + PLE + SFT/RLHF |
+| Gemma4-26B-A4B | ~4B active | 25.2B | — | 256K | Text + Image | Apache 2.0 | MoE (128+1 exp, top-8) |
+| Gemma4-26B-A4B-IT | ~4B active | 25.2B | — | 256K | Text + Image | Apache 2.0 | MoE + SFT/RLHF |
+| Gemma4-31B | 30.7B | 30.7B | — | 256K | Text + Image | Apache 2.0 | Dense |
+| Gemma4-31B-IT | 30.7B | 30.7B | — | 256K | Text + Image | Apache 2.0 | Dense + SFT/RLHF |
+
+> **Companion model:** ShieldGemma 4 safety classifier released alongside for responsible deployment.
+
+<details>
+<summary><strong>Key Industry Ideas Incorporated</strong></summary>
+
+| Technique | Origin | How Gemma 4 Used It |
+|:----------|:-------|:--------------------|
+| Mixture-of-Experts (MoE) | Shazeer et al., "Outrageously Large Neural Networks" (2017); Mixtral (2023) | 26B A4B: 128+1 experts per MoE layer, top-8 routing — full MoE debut in the Gemma family |
+| Per-Layer Embeddings (PLE) | Gemma 4 (Google DeepMind, 2026) | Layer-specific embedding tables fetched from flash memory, injected residually after each layer for edge intelligence-per-parameter boost |
+| Proportional RoPE (p-RoPE) | Gemma 4 (Google DeepMind, 2026) | Only 25% of RoPE coordinate pairs encoded in global attention layers for 256K contexts, reducing positional noise |
+| K=V Trick (Keys = Values) | Gemma 4 (Google DeepMind, 2026) | Global attention layers set K=V, collapsing KV cache to a single cache and halving memory requirements |
+| Shared KV Cache | Gemma 4 (Google DeepMind, 2026) | Last N layers of the same attention type share K/V, reducing redundant memory across layers |
+| Chain-of-Thought / Thinking Mode | Wei et al., "Chain-of-Thought Prompting" (NeurIPS 2022); DeepSeek-R1 (2025) | `<|think|>` token activates step-by-step reasoning traces before final output |
+| SigLIP 2 (upgraded vision encoder) | Zhai et al., SigLIP (2023) + Google improvements | Enhanced alignment training over Gemma 3's SigLIP; variable-resolution multi-tile input |
+| Function Calling / Tool Use | Toolformer (2023), GPT-4 function calling (2023) | Native tool use and function calling via chat templates for agentic deployments |
+| Apache 2.0 Open Licensing | OSI (Open Source Initiative) | First Gemma generation fully open; previous versions used custom Gemma Terms of Use |
+
+</details>
+
+---
+
 ## 📚 References
 
 ### Technical Papers
@@ -668,6 +857,7 @@ This document covers **three generations** of the Gemma large language model fam
 | Gemma 1 | Gemma: Open Models Based on Gemini Research and Technology | [arXiv:2403.08295](https://arxiv.org/abs/2403.08295) | Mar 2024 |
 | Gemma 2 | Gemma 2: Improving Open Language Models at a Practical Size | [arXiv:2408.00118](https://arxiv.org/abs/2408.00118) | Aug 2024 |
 | Gemma 3 | Gemma 3 Technical Report | [arXiv:2503.19786](https://arxiv.org/abs/2503.19786) | Mar 2025 |
+| Gemma 4 | Gemma 4 Model Card (Google AI for Developers) | [ai.google.dev/gemma/docs/core/model_card_4](https://ai.google.dev/gemma/docs/core/model_card_4) | Apr 2026 |
 
 ### Official Blog Posts
 
@@ -676,6 +866,7 @@ This document covers **three generations** of the Gemma large language model fam
 | Gemma: Introducing New State-of-the-Art Open Models | [blog.google/technology/developers/gemma-open-models/](https://blog.google/technology/developers/gemma-open-models/) |
 | Gemma 2: Advancing Frontier AI Responsibly | [blog.google/technology/developers/google-gemma-2/](https://blog.google/technology/developers/google-gemma-2/) |
 | Gemma 3 — The Developer Guide | [developers.googleblog.com/en/introducing-gemma3/](https://developers.googleblog.com/en/introducing-gemma3/) |
+| Gemma 4: Expanding the Gemmaverse with Apache 2.0 | [opensource.googleblog.com/2026/04/gemma-4-expanding-gemmaverse-apache-2.html](https://opensource.googleblog.com/2026/04/gemma-4-expanding-gemmaverse-apache-2.html) |
 | Google DeepMind Gemma Page | [deepmind.google/models/gemma/](https://deepmind.google/models/gemma/) |
 
 ### GitHub & Model Repositories
@@ -686,6 +877,7 @@ This document covers **three generations** of the Gemma large language model fam
 | Gemma on Hugging Face | [huggingface.co/google/gemma-7b](https://huggingface.co/google/gemma-7b) |
 | Gemma 2 on Hugging Face | [huggingface.co/google/gemma-2-27b](https://huggingface.co/google/gemma-2-27b) |
 | Gemma 3 on Hugging Face | [huggingface.co/google/gemma-3-27b-it](https://huggingface.co/google/gemma-3-27b-it) |
+| Gemma 4 on Hugging Face | [huggingface.co/google/gemma-4-31b-it](https://huggingface.co/google/gemma-4-31b-it) |
 | Gemma on Kaggle | [kaggle.com/models/google/gemma](https://www.kaggle.com/models/google/gemma) |
 | Keras NLP Gemma | [keras.io/api/keras_nlp/models/gemma/](https://keras.io/api/keras_nlp/models/gemma/) |
 
@@ -706,11 +898,13 @@ This document covers **three generations** of the Gemma large language model fam
 | InstructGPT / RLHF | Ouyang et al., "Training language models to follow instructions with human feedback" (NeurIPS 2022) | [arXiv:2203.02155](https://arxiv.org/abs/2203.02155) |
 | Gemini Architecture | Gemini Team, "Gemini: A Family of Highly Capable Multimodal Models" (2023) | [arXiv:2312.11805](https://arxiv.org/abs/2312.11805) |
 | LLaMA 3 (RoPE scaling) | Meta AI, "The Llama 3 Herd of Models" (2024) | [arXiv:2407.21783](https://arxiv.org/abs/2407.21783) |
+| Mixture-of-Experts | Shazeer et al., "Outrageously Large Neural Networks: The Sparsely-Gated MoE Layer" (2017) | [arXiv:1701.06538](https://arxiv.org/abs/1701.06538) |
+| Chain-of-Thought Prompting | Wei et al., "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models" (NeurIPS 2022) | [arXiv:2201.11903](https://arxiv.org/abs/2201.11903) |
 
 ---
 
 <p align="center">
-  <sub>Built with data from official Gemma technical reports and Google DeepMind blog posts. All benchmark numbers sourced directly from the referenced publications.</sub>
+  <sub>Built with data from official Gemma technical reports, Google DeepMind blog posts, and the Gemma 4 model card (April 2026). All benchmark numbers sourced directly from the referenced publications.</sub>
 </p>
 
 <p align="center">
