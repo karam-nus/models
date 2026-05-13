@@ -32,6 +32,12 @@ navigation:
     url: "/"
   - title: "01 — Qwen"
     url: "/01_Qwen"
+  - title: "02 — Llama"
+    url: "/02_Llama"
+  - title: "04 — Gemma"
+    url: "/04_Gemma"
+  - title: "07 — Alpamayo"
+    url: "/07_Alpamayo"
 
 defaults:
   - scope:
