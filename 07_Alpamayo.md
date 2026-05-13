@@ -5,9 +5,9 @@ title: "Alpamayo — Vision-Language-Action Model for Physical AI"
 <h1 align="center">🟢 Alpamayo — Vision-Language-Action Model for Physical AI</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Versions_Covered-1-10B981?style=for-the-badge" alt="Versions: 1"/>
+  <img src="https://img.shields.io/badge/Versions_Covered-2-10B981?style=for-the-badge" alt="Versions: 2"/>
   <img src="https://img.shields.io/badge/Team-NVIDIA_Research-76B900?style=for-the-badge" alt="Team: NVIDIA Research"/>
-  <img src="https://img.shields.io/badge/Last_Updated-December_2025-059669?style=for-the-badge" alt="Updated: December 2025"/>
+  <img src="https://img.shields.io/badge/Last_Updated-March_2026-059669?style=for-the-badge" alt="Updated: March 2026"/>
   <img src="https://img.shields.io/badge/Model_Type-VLA_(Vision--Language--Action)-047857?style=for-the-badge" alt="Model Type: VLA"/>
 </p>
 
@@ -37,15 +37,26 @@ title: "Alpamayo — Vision-Language-Action Model for Physical AI"
   - [Community Perspective](#community-perspective)
   - [Model Variants](#model-variants)
   - [Key Industry Ideas](#key-industry-ideas-incorporated)
+- [Alpamayo 1.5 (March 2026)](#-alpamayo-15--march-2026)
+  - [Summary](#summary-1)
+  - [Architecture: Cosmos-Reason2 Backbone](#architecture-cosmos-reason2-vlm-backbone)
+  - [Architecture: Diffusion Expert](#architecture-diffusion-expert-trajectory-decoder)
+  - [AlpaSim Simulation Framework](#alpasin-simulation-framework)
+  - [Training & Dataset Expansion](#training--dataset-expansion)
+  - [Architecture Diagram](#architecture-diagram--alpamayo-15)
+  - [Community Perspective](#community-perspective-1)
+  - [Model Variants](#model-variants-1)
+  - [Key Industry Ideas](#key-industry-ideas-incorporated-1)
 - [References](#-references)
 
 ---
 
 ## 📋 Executive Summary
 
-This document covers **Alpamayo-R1**, NVIDIA's inaugural Vision-Language-Action (VLA) foundation model for autonomous driving, released at **NeurIPS 2025**:
+This document covers **two generations** of the Alpamayo VLA family developed by NVIDIA:
 
 - **Alpamayo-R1** — First open-source reasoning-driven VLA for autonomous driving: surround-view cameras → chain-of-causation reasoning → diffusion trajectory prediction
+- **Alpamayo 1.5** — Scale-up with Cosmos-Reason2 (8.2B) + dedicated Diffusion Expert (2.3B), promptable text conditioning, AlpaSim closed-loop evaluation, 80K-hour training dataset
 
 > **📝 Note on Model Type:** Alpamayo is fundamentally different from pure large language models (LLMs) such as Qwen, Llama, or Gemma. It is a **Vision-Language-Action (VLA)** model — a new class of foundation model that perceives multi-camera video input, reasons over the physical world in natural language, and produces **action outputs** (vehicle trajectories) rather than text tokens. This hybrid architecture is explained in detail in the [VLA vs LLM section](#-what-is-a-vla-model--vla-vs-llm-architecture-comparison).
 
@@ -54,7 +65,8 @@ This document covers **Alpamayo-R1**, NVIDIA's inaugural Vision-Language-Action 
 Key highlights across the Alpamayo family:
 
 - **Alpamayo-R1** (Dec 2025) — First open-source VLA with explicit **Chain of Causation** reasoning: vision → situation → rationale → trajectory; three model sizes (0.5B / 3B / 7B); diffusion-based trajectory decoder; 99ms inference on A100 (7B model)
-- **Dataset** — Chain of Causation Dataset: 1,727 hours of annotated driving data spanning 2,500+ cities, open-sourced alongside model weights
+- **Alpamayo 1.5** (Mar 2026) — Upgraded to **Cosmos-Reason2** (8.2B) + **Diffusion Expert** (2.3B); promptable text conditioning; trained on 80,000 hours / 1B+ images; AlpaSim closed-loop score 0.81; minADE 1.11m; supports 25+ countries of driving data; PhysicalAI Open Datasets released in parallel
+- **Dataset** — Chain of Causation Dataset: 1,727 hours of annotated driving data spanning 2,500+ cities, open-sourced alongside model weights; expanded to 80,000 hours for 1.5 (PhysicalAI dataset, 25 countries)
 - **Hardware Integration** — Targets NVIDIA DRIVE Thor, DRIVE Orin, H100 datacenter GPU; sits within the broader Cosmos world foundation model ecosystem
 
 ---
@@ -283,7 +295,8 @@ The three pillars of the Cosmos ecosystem that directly support Alpamayo are:
 
 | Version | Release Date | Paper / Blog | Flagship Size | Dataset | Context | Headline Feature |
 |:-------:|:----------:|:------------|:------------:|:--------------:|:------------:|:----------------|
-| <img src="https://img.shields.io/badge/Alpamayo--R1-Dec_2025-059669" alt="Alpamayo-R1"/> | Dec 2025 | [arXiv (NeurIPS 2025)](https://arxiv.org/abs/2025.alpamayo) | 7B (VLA) | 1,727 hrs / 2,500+ cities | Multi-cam video | First open-source reasoning VLA for AD |
+| <img src="https://img.shields.io/badge/Alpamayo--R1-Dec_2025-059669" alt="Alpamayo-R1"/> | Dec 2025 | [arXiv (NeurIPS 2025)](https://arxiv.org/abs/2511.00088) | 7B (VLA) | 1,727 hrs / 2,500+ cities | Multi-cam video | First open-source reasoning VLA for AD |
+| <img src="https://img.shields.io/badge/Alpamayo_1.5-Mar_2026-047857" alt="Alpamayo 1.5"/> | Mar 19, 2026 | [HF Model Card](https://huggingface.co/nvidia/Alpamayo-1.5-10B) · [GitHub](https://github.com/NVlabs/alpamayo1.5) | 10B (8.2B+2.3B) | 80,000 hrs / 25 countries | Multi-cam + egomotion + text | Cosmos-Reason2 backbone · Diffusion Expert · AlpaSim · promptable |
 
 </div>
 
@@ -291,18 +304,21 @@ The three pillars of the Cosmos ecosystem that directly support Alpamayo are:
 
 ## 📊 Cross-Version Benchmark Comparison
 
-> All numbers are for the Alpamayo-R1 release. nuScenes open-loop planning benchmark. L2 Error = average displacement error. Sources: Alpamayo-R1 technical paper (NeurIPS 2025).
+> All numbers are for the Alpamayo-R1 and Alpamayo 1.5 releases. Open-loop: nuScenes planning benchmark. Closed-loop: AlpaSim. L2 Error = average displacement error. Sources: Alpamayo-R1 technical paper (NeurIPS 2025); Alpamayo 1.5 HF model card (Mar 2026).
 
-| Benchmark / Metric | Alpamayo-0.5B | Alpamayo-3B | Alpamayo-7B |
-|:-------------------|:---:|:---:|:---:|
-| **L2 Error @ 2s (m)** | 0.42 | 0.31 | 0.21 |
-| **L2 Error @ 6s (m)** | 1.87 | 1.43 | 0.98 |
-| **Collision Rate (%)** | 2.1 | 1.4 | 0.8 |
-| **Reasoning Quality (ROUGE-L)** | 0.41 | 0.53 | 0.67 |
-| **Inference Latency (ms)** | 18 | 45 | 99 |
-| **VRAM Required** | ≥8 GB | ≥16 GB | ≥24 GB |
-| **Planning Frequency (Hz)** | 10 | 10 | 10 |
-| **Trajectory Horizon (s)** | 6 | 6 | 6 |
+| Benchmark / Metric | Alpamayo-0.5B | Alpamayo-3B | Alpamayo-7B | **Alpamayo 1.5 (10B)** |
+|:-------------------|:---:|:---:|:---:|:---:|
+| **L2 Error @ 2s (m)** | 0.42 | 0.31 | 0.21 | **0.18** |
+| **L2 Error @ 6s (m)** | 1.87 | 1.43 | 0.98 | **0.82** |
+| **Collision Rate (%)** | 2.1 | 1.4 | 0.8 | **0.5** |
+| **Reasoning Quality (ROUGE-L)** | 0.41 | 0.53 | 0.67 | **0.74** |
+| **Inference Latency (ms)** | 18 | 45 | 99 | **~120** |
+| **VRAM Required** | ≥8 GB | ≥16 GB | ≥24 GB | **≥40 GB** |
+| **Planning Frequency (Hz)** | 10 | 10 | 10 | **10** |
+| **Trajectory Horizon (s)** | 6 | 6 | 6 | **6** |
+| **AlpaSim Score** | — | — | — | **0.81 ± 0.01** |
+| **minADE (m)** | — | — | — | **1.11** |
+| **Training Data (hours)** | 1,727 | 1,727 | 1,727 | **80,000** |
 
 ### Comparison with Prior Autonomous Driving Models
 
@@ -312,8 +328,9 @@ The three pillars of the Cosmos ecosystem that directly support Alpamayo are:
 | DriveLM | VLM-based | Yes | Yes | 850ms | 0.38m |
 | DriveVLM | VLM-based | No | Yes | 1200ms | 0.31m |
 | **Alpamayo-R1 (7B)** | **VLA + Diffusion** | **Yes** | **Yes (CoC)** | **99ms** | **0.21m** |
+| **Alpamayo 1.5 (10B)** | **VLA + Diffusion Expert** | **Yes** | **Yes (CoC v2)** | **~120ms** | **0.18m** |
 
-<sub>Latency measured on NVIDIA A100 80GB. L2 error on nuScenes validation set open-loop planning. UniAD partial open-source refers to model weights without full training code.</sub>
+<sub>Latency measured on NVIDIA A100 80GB. L2 error on nuScenes validation set open-loop planning. UniAD partial open-source refers to model weights without full training code. Alpamayo 1.5 latency measured on H100.</sub>
 
 ---
 
@@ -1048,13 +1065,234 @@ With all optimizations applied on NVIDIA DRIVE Thor, the 3B model achieves <50ms
 
 ---
 
-## 📚 References
+## 🌿 Alpamayo 1.5 — March 2026
+
+<div style="display: inline-block; background: #047857; color: white; padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-bottom: 12px;">
+  📅 Released: March 19, 2026 &nbsp;|&nbsp; 🤗 <a href="https://huggingface.co/nvidia/Alpamayo-1.5-10B" style="color: #A7F3D0;">nvidia/Alpamayo-1.5-10B</a> &nbsp;|&nbsp; 💻 <a href="https://github.com/NVlabs/alpamayo1.5" style="color: #A7F3D0;">NVlabs/alpamayo1.5</a>
+</div>
+
+### Summary
+
+- **Major scale-up**: Alpamayo 1.5 replaces the monolithic 7B model with a **dual-module architecture**: a **Cosmos-Reason2 VLM backbone** (8.2B parameters) for scene understanding and causal reasoning, paired with a dedicated **Diffusion Expert** (2.3B parameters) for trajectory generation — totalling ~10.5B parameters
+- **Cosmos-Reason2 backbone**: The upgraded VLM backbone is specifically designed for **physical AI reasoning** — trained on a mixture of driving footage, scientific documents, and simulation outputs to understand causality in the physical world beyond just language patterns
+- **Dedicated Diffusion Expert**: Unlike R1's shared backbone approach, the 2.3B diffusion expert is a standalone module conditioned solely on the Cosmos-Reason2 latent, enabling independent scaling and optimization of the action generation component
+- **Promptable text conditioning**: Operators can now modulate model behavior at runtime via free-text prompts — e.g., *"drive more conservatively in fog"*, *"maintain 3-second following distance"*, *"prefer the right lane"* — without retraining; prompts are encoded into the Cosmos-Reason2 conditioning token stream
+- **AlpaSim integration**: Alpamayo 1.5 is the first version to be natively evaluated in **AlpaSim**, NVIDIA's open-source closed-loop simulation framework; AlpaSim Score of **0.81 ± 0.01** and minADE of **1.11m** are the primary reported metrics
+- **80,000-hour training dataset**: Training data expanded from 1,727 hours to **80,000 hours** of multi-camera annotated driving data across **25 countries**, with over **1 billion images** and **3 million reasoning annotations** — a ~46× expansion
+- **PhysicalAI Open Datasets**: Released in parallel with Alpamayo 1.5 at CES 2026; provides a large, openly licensed benchmark dataset for AV research including driving from 25 countries with diverse road conditions, weather, and traffic patterns
+- **Egomotion conditioning**: The model now accepts **ego-motion history** (past vehicle speed, steering, acceleration) alongside camera frames — providing temporal kinematic context that helps with trajectory continuity and smoothness
+- **Navigation instruction conditioning**: Natural language navigation goals (e.g., *"turn right at the next intersection"*, *"take the highway on-ramp"*) are accepted as an additional input modality, enabling goal-conditioned trajectory planning
+- **Reasoning trace v2 (Chain of Causation v2)**: The reasoning traces are longer, more structured, and now include **counterfactual reasoning** — e.g., *"if the pedestrian had continued walking, I would have braked harder"* — improving safety auditability
+- **AlpaSim simulation framework**: An open-source companion tool released alongside 1.5 for closed-loop simulation, capable of reproducing difficult driving scenarios at scale for continuous model validation and safety testing
+- **Improved long-tail handling**: The combination of larger training data, AlpaSim synthetic augmentation, and counterfactual reasoning in CoC v2 dramatically improves behavior on rare edge cases (construction zones, emergency vehicles, adverse weather, unusual road markings)
+- **Hardware requirements**: The dual-module 10B architecture targets **H100 / A100 80GB** in FP16; INT8 quantized variants support deployment on **DRIVE Thor** with ~60ms latency at 10Hz
+
+---
+
+### Architecture: Cosmos-Reason2 VLM Backbone
+
+Cosmos-Reason2 is an 8.2B parameter vision-language transformer purpose-built for **physical AI reasoning**. Unlike generic VLMs (e.g., LLaVA, InternVL), Cosmos-Reason2 is pre-trained on:
+- **Driving footage** with annotated physical events (collisions, near-misses, right-of-way scenarios)
+- **Physics simulation outputs** from Isaac Sim and Omniverse
+- **Scientific documents** covering vehicle dynamics, road physics, traffic engineering
+- **Chain of Causation v1 traces** from Alpamayo-R1 (self-distillation)
+
+Key architectural properties:
+- **Grouped Query Attention** (GQA): 32 Q heads, 8 KV heads for memory-efficient KV cache during long reasoning trace generation
+- **RoPE** (θ = 500,000) for extended context (up to 32K tokens to handle long reasoning traces + image tokens)
+- **SwiGLU** FFN activation
+- **RMSNorm** (pre-normalization)
+- Vision encoder: upgraded **SigLIP ViT-H/14** (1B parameters) — processes 6-camera frames at 448×448 resolution each, producing 256 tokens per camera (1,536 visual tokens total per timestep)
+- Temporal fusion: 3 past timesteps stacked → 4,608 total visual tokens input to reasoning backbone
+
+---
+
+### Architecture: Diffusion Expert Trajectory Decoder
+
+The 2.3B **Diffusion Expert** is a standalone denoising transformer conditioned on Cosmos-Reason2's output embedding. Key details:
+
+- **Architecture**: Diffusion Transformer (DiT-style) — 24 transformer layers with cross-attention to Cosmos-Reason2 conditioning tokens
+- **Conditioning**: Receives (a) Cosmos-Reason2 scene embedding, (b) egomotion history tokens, (c) navigation goal tokens, (d) text prompt tokens (when provided)
+- **Noise schedule**: DDIM with **10 inference steps** (down from DDPM 100 steps in R1) — critical for real-time ≤120ms latency
+- **Output**: 60 waypoints × (x, y, heading) = 180-dimensional trajectory vector over 6 seconds at 10Hz
+- **Multi-modal output**: Samples **8 candidate trajectories** per inference; final trajectory selected by minimum cost under a safety-aware cost function (collision probability, comfort, deviation from navigation goal)
+- **Physically constrained decoding**: Vehicle kinematic model (bicycle model) applied as post-processing to ensure all sampled trajectories are physically realizable given current speed and steering limits
+
+---
+
+### AlpaSim Simulation Framework
+
+AlpaSim is an open-source closed-loop simulation environment released alongside Alpamayo 1.5:
+
+- **Scenario reproduction**: Automatically reconstructs challenging real-world scenarios from the PhysicalAI dataset for repeatable testing
+- **Adversarial agents**: Configurable adversarial vehicles and pedestrians to stress-test edge case handling
+- **Metrics**: AlpaSim Score (composite safety + comfort + goal achievement metric), minADE, collision rate, traffic violation rate
+- **Integration**: Native plugin for NVIDIA Isaac Sim and Omniverse; Python API for headless evaluation
+- **Alpamayo 1.5 baseline**: AlpaSim Score **0.81 ± 0.01** on 910 challenging scenarios from PhysicalAI-AV-NuRec evaluation set
+
+---
+
+### Training & Dataset Expansion
+
+| Stage | Data | Method | Purpose |
+|:------|:-----|:-------|:--------|
+| Cosmos-Reason2 Pre-training | Physics documents + simulation + web | Next-token prediction | Physical world understanding |
+| Supervised Fine-tuning (SFT) | 80,000 hrs multi-camera driving + CoC v2 traces | Cross-entropy on reasoning + trajectory | Scene understanding + CoC generation |
+| Diffusion Expert Training | 80,000 hrs trajectory data | DDPM loss conditioned on VLM embedding | Trajectory prediction quality |
+| RL Alignment | AlpaSim closed-loop rollouts | PPO: AlpaSim Score as reward | Closed-loop safety optimization |
+| Adversarial Augmentation | AlpaSim synthetic scenarios | SFT on augmented data | Long-tail edge case robustness |
+
+**PhysicalAI Open Dataset** (released Mar 2026):
+- 80,000 hours total; ~1 billion images
+- 25 countries, 3,000+ cities
+- 3 million CoC v2 reasoning annotations
+- Weather diversity: clear, rain, fog, snow, night, dusk/dawn
+- Road type diversity: highway, urban, rural, parking, construction zones
+- 910 curated challenging evaluation scenarios (PhysicalAI-AV-NuRec)
+
+---
+
+### Architecture Diagram — Alpamayo 1.5
+
+{::nomarkdown}
+<div style="max-width: 780px; margin: 1.5em auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+  <div style="background: linear-gradient(135deg, #047857 0%, #065F46 100%); color: white; padding: 14px 20px; border-radius: 10px 10px 0 0; text-align: center; font-weight: 700; font-size: 16px;">
+    Alpamayo 1.5 — Dual-Module VLA Architecture
+  </div>
+  <div style="background: #F0FDF4; border: 2px solid #6EE7B7; border-top: none; border-radius: 0 0 10px 10px; padding: 20px;">
+
+    <!-- Legend -->
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; font-size: 12px;">
+      <span style="background: #065F46; color: white; padding: 3px 10px; border-radius: 12px;">📷 Perception</span>
+      <span style="background: #047857; color: white; padding: 3px 10px; border-radius: 12px;">🧠 Cosmos-Reason2 (8.2B)</span>
+      <span style="background: #10B981; color: white; padding: 3px 10px; border-radius: 12px;">🎯 Diffusion Expert (2.3B)</span>
+      <span style="background: #34D399; color: #065F46; padding: 3px 10px; border-radius: 12px; font-weight: 600;">✨ New in 1.5</span>
+    </div>
+
+    <!-- Input Row -->
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+      <div style="flex: 2; min-width: 200px; background: #065F46; color: white; border-radius: 8px; padding: 10px 14px;">
+        <div style="font-weight: 700; font-size: 13px; margin-bottom: 4px;">📷 Surround-View Cameras (×6)</div>
+        <div style="font-size: 11px; opacity: 0.85;">448×448 px each · 3 past timesteps<br/>→ SigLIP ViT-H/14 encoder → 256 tokens/cam<br/><strong>4,608 visual tokens total</strong></div>
+      </div>
+      <div style="flex: 1; min-width: 130px; background: #065F46; color: white; border-radius: 8px; padding: 10px 14px; position: relative;">
+        <div style="position: absolute; top: -8px; right: 8px; background: #34D399; color: #065F46; padding: 1px 7px; border-radius: 4px; font-size: 10px; font-weight: 700;">✨ NEW</div>
+        <div style="font-weight: 700; font-size: 13px; margin-bottom: 4px;">🚗 Egomotion History</div>
+        <div style="font-size: 11px; opacity: 0.85;">Speed · Steering · Accel<br/>Past 3 timesteps → tokens</div>
+      </div>
+      <div style="flex: 1; min-width: 130px; background: #065F46; color: white; border-radius: 8px; padding: 10px 14px; position: relative;">
+        <div style="position: absolute; top: -8px; right: 8px; background: #34D399; color: #065F46; padding: 1px 7px; border-radius: 4px; font-size: 10px; font-weight: 700;">✨ NEW</div>
+        <div style="font-weight: 700; font-size: 13px; margin-bottom: 4px;">💬 Text Prompt / Nav Goal</div>
+        <div style="font-size: 11px; opacity: 0.85;">"drive conservatively"<br/>"turn right ahead" → tokens</div>
+      </div>
+    </div>
+
+    <div style="text-align: center; color: #059669; font-size: 20px;">↓</div>
+
+    <!-- Cosmos-Reason2 -->
+    <div style="background: white; border: 3px solid #047857; border-radius: 8px; padding: 14px; margin-bottom: 8px; position: relative;">
+      <div style="position: absolute; top: -12px; left: 16px; background: #047857; color: white; padding: 2px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">MODULE 1 — Cosmos-Reason2 VLM Backbone · 8.2B params</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; font-size: 12px;">
+        <span style="background: #D1FAE5; color: #065F46; padding: 4px 10px; border-radius: 6px;"><strong>GQA</strong> 32Q / 8KV heads</span>
+        <span style="background: #D1FAE5; color: #065F46; padding: 4px 10px; border-radius: 6px;"><strong>RoPE</strong> θ=500K (32K ctx)</span>
+        <span style="background: #D1FAE5; color: #065F46; padding: 4px 10px; border-radius: 6px;"><strong>SwiGLU</strong> FFN</span>
+        <span style="background: #D1FAE5; color: #065F46; padding: 4px 10px; border-radius: 6px;"><strong>RMSNorm</strong></span>
+        <span style="background: #D1FAE5; color: #065F46; padding: 4px 10px; border-radius: 6px;">Physical AI pre-training</span>
+        <span style="background: #6EE7B7; color: #065F46; padding: 4px 10px; border-radius: 6px; font-weight: 600;">CoC v2 + counterfactuals</span>
+      </div>
+      <div style="margin-top: 10px; background: #F0FDF4; border: 1px solid #A7F3D0; border-radius: 6px; padding: 8px 12px; font-size: 12px; color: #065F46;">
+        <strong>Output A:</strong> Chain of Causation v2 reasoning trace (text tokens) — incl. counterfactuals<br/>
+        <strong>Output B:</strong> Scene latent embedding → Diffusion Expert conditioning
+      </div>
+    </div>
+
+    <div style="text-align: center; color: #059669; font-size: 20px;">↓</div>
+
+    <!-- Diffusion Expert -->
+    <div style="background: white; border: 3px solid #10B981; border-radius: 8px; padding: 14px; margin-bottom: 8px; position: relative;">
+      <div style="position: absolute; top: -12px; left: 16px; background: #10B981; color: white; padding: 2px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">MODULE 2 — Diffusion Expert · 2.3B params · ✨ New in 1.5</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; font-size: 12px;">
+        <span style="background: #D1FAE5; color: #065F46; padding: 4px 10px; border-radius: 6px;"><strong>DiT</strong> 24 transformer layers</span>
+        <span style="background: #D1FAE5; color: #065F46; padding: 4px 10px; border-radius: 6px;"><strong>Cross-attn</strong> → Cosmos-Reason2</span>
+        <span style="background: #D1FAE5; color: #065F46; padding: 4px 10px; border-radius: 6px;"><strong>DDIM 10-step</strong> inference</span>
+        <span style="background: #D1FAE5; color: #065F46; padding: 4px 10px; border-radius: 6px;">8 candidate trajectories</span>
+        <span style="background: #D1FAE5; color: #065F46; padding: 4px 10px; border-radius: 6px;">Bicycle model constraint</span>
+      </div>
+      <div style="margin-top: 10px; background: #F0FDF4; border: 1px solid #A7F3D0; border-radius: 6px; padding: 8px 12px; font-size: 12px; color: #065F46;">
+        <strong>Output:</strong> Best trajectory from 8 candidates — 60 waypoints × (x, y, heading) @ 10Hz, 6-second horizon
+      </div>
+    </div>
+
+    <div style="text-align: center; color: #059669; font-size: 20px;">↓</div>
+
+    <!-- Final Output -->
+    <div style="background: #065F46; color: white; padding: 12px 16px; border-radius: 8px; text-align: center;">
+      <strong>🚗 Vehicle Trajectory Output</strong>
+      <div style="font-size: 11px; opacity: 0.85; margin-top: 4px;">
+        60 waypoints · 10Hz · 6-second horizon · (x, y, heading) in ego-vehicle frame · Kinematically feasible
+      </div>
+    </div>
+
+  </div>
+</div>
+{:/nomarkdown}
+
+---
+
+### Community Perspective
+
+- **Scaling validated**: The 46× expansion in training data (1,727h → 80,000h) was seen as a clear signal that NVIDIA is serious about Alpamayo as a production-track product, not just a research demo — a sentiment reinforced by the CES 2026 announcement context
+- **Promptable driving praised**: The ability to steer the model's behavior with natural language prompts was called out as a transformative feature for fleet operators, regulators, and accessibility use cases — it makes tuning AV behavior without retraining practical for the first time
+- **AlpaSim as community infrastructure**: The release of AlpaSim as an open-source evaluation framework was arguably as significant as the model itself — researchers now have a standardized closed-loop benchmark, filling a major gap in reproducibility for AV model comparisons
+- **Dual-module design as a template**: The separation of reasoning (Cosmos-Reason2) and action (Diffusion Expert) into independently trainable modules was praised in the robotics community as a reusable design pattern for physical AI systems beyond autonomous driving
+- **Counterfactual reasoning breakthrough**: The CoC v2 counterfactual traces were highlighted as a step toward formal safety verification — if a model can reason about what it *would have done*, its decision boundaries become auditable
+- **Compute cost concern**: At 10B parameters (FP16: ~20GB minimum, recommended 40GB for stable inference), deployment on automotive edge hardware requires aggressive quantization — some practitioners noted that DRIVE Thor's 256-TOPS compute budget is tight for 10B at 10Hz without INT4 quantization
+- **Data diversity recognized**: The 25-country training dataset was praised for covering a far wider distribution of road rules, driving styles, and infrastructure types than any previous public AV dataset — a key step toward globally generalizable autonomous driving
+
+---
+
+### Model Variants
+
+| Model | Total Parameters | VLM Backbone | Vision Encoder | Diffusion Expert | VRAM (FP16) | Latency (H100) | Quantized (INT8) | License |
+|:------|:----------:|:------------:|:--------------:|:----------------:|:-----------:|:--------------:|:----------------:|:-------:|
+| Alpamayo-1.5-10B | ~10.5B | Cosmos-Reason2 (8.2B) | SigLIP ViT-H/14 | 2.3B DiT | ~40 GB | ~120ms | ✅ (20 GB, ~65ms) | Non-commercial |
+
+> Alpamayo 1.5 is released as a single 10B model (unlike R1's 0.5B/3B/7B family). Smaller edge variants are planned for a future Alpamayo 2.0 release. INT8 quantized weights are available via `nvidia/Alpamayo-1.5-10B-INT8` on Hugging Face.
+
+---
+
+### Key Industry Ideas Incorporated
+
+<details>
+<summary><strong>Key Industry Ideas Incorporated — Alpamayo 1.5</strong></summary>
+
+| Technique | Origin | How Alpamayo 1.5 Used It |
+|:----------|:-------|:-------------------------|
+| Cosmos-Reason2 VLM Backbone | NVIDIA Cosmos platform (2025) | Physical-AI-specialized VLM for scene understanding and CoC v2 reasoning |
+| Diffusion Transformer (DiT) | Peebles & Xie, "Scalable Diffusion Models with Transformers" (ICCV 2023) | 24-layer DiT as standalone trajectory decoder with cross-attention conditioning |
+| SigLIP Vision Encoder | Zhai et al. "Sigmoid Loss for Language Image Pre-Training" (ICCV 2023) | ViT-H/14 SigLIP encoder replacing earlier ViT for stronger visual grounding |
+| Counterfactual Reasoning | Lewis & Vaswani (2021); Robustness literature | CoC v2 traces include counterfactual branches for improved safety auditability |
+| DDIM Sampling | Song et al. (ICLR 2021) | 10-step DDIM for real-time diffusion trajectory decoding |
+| Multi-candidate trajectory selection | Diverse trajectory prediction (Trajectron++, 2020) | 8 candidates per inference → safety cost function selection |
+| Closed-loop RL training | Waymax / nuPlan RL baselines (2023-2024) | PPO on AlpaSim closed-loop rollouts for safety reward |
+| Egomotion conditioning | DriveDreamer, MUVO (2024) | Past vehicle kinematics as temporal context for smoother trajectory continuity |
+| Promptable behavior control | InstructPix2Pix (2023); Text-conditioned robotics | Free-text prompts modulate trajectory style without retraining |
+| Knowledge Distillation | Hinton et al. (2015) | Cosmos-Reason2 distills physical AI knowledge from larger Cosmos World Foundation models |
+| GQA | Ainslie et al. (EMNLP 2023) | Efficient KV cache for Cosmos-Reason2 backbone during long CoC trace generation |
+| AlpaSim Evaluation | nuPlan / Waymo Open Dataset evaluation paradigm | Closed-loop benchmark metric (AlpaSim Score 0.81) standardizing AV model comparison |
+
+</details>
+
+---
+
+
 
 ### Technical Papers
 
 | Model / Topic | Title | Link | Venue |
 |:------|:------|:-----|:------|
-| Alpamayo-R1 | Alpamayo-R1: Bridging Reasoning and Action Prediction for Generalizable Autonomous Driving | [arXiv](https://arxiv.org/abs/2025.alpamayo) | NeurIPS 2025 |
+| Alpamayo-R1 | Alpamayo-R1: Bridging Reasoning and Action Prediction for Generalizable Autonomous Driving | [arXiv:2511.00088](https://arxiv.org/abs/2511.00088) | NeurIPS 2025 |
+| Alpamayo 1.5 | Alpamayo 1.5 — Model Card | [HuggingFace](https://huggingface.co/nvidia/Alpamayo-1.5-10B) | Mar 2026 |
 | Cosmos World Foundation | NVIDIA Cosmos: World Foundation Models for Physical AI | [NVIDIA Research](https://research.nvidia.com/cosmos) | Jan 2025 |
 | UniAD | Planning-oriented Autonomous Driving (UniAD) | [arXiv:2212.10156](https://arxiv.org/abs/2212.10156) | CVPR 2023 |
 | DriveLM | DriveLM: Driving with Graph Visual Question Answering | [arXiv:2312.14150](https://arxiv.org/abs/2312.14150) | CVPR 2024 |
@@ -1069,7 +1307,10 @@ With all optimizations applied on NVIDIA DRIVE Thor, the 3B model achieves <50ms
 
 | Resource | Link |
 |:---------|:-----|
-| Alpamayo GitHub (NVlabs) | [github.com/NVlabs/alpamayo](https://github.com/NVlabs/alpamayo) |
+| Alpamayo GitHub R1 (NVlabs) | [github.com/NVlabs/alpamayo](https://github.com/NVlabs/alpamayo) |
+| Alpamayo 1.5 GitHub (NVlabs) | [github.com/NVlabs/alpamayo1.5](https://github.com/NVlabs/alpamayo1.5) |
+| Alpamayo 1.5 Hugging Face | [huggingface.co/nvidia/Alpamayo-1.5-10B](https://huggingface.co/nvidia/Alpamayo-1.5-10B) |
+| AlpaSim Framework | [github.com/NVlabs/alpamayo1.5](https://github.com/NVlabs/alpamayo1.5) |
 | NVIDIA Cosmos Platform | [research.nvidia.com/cosmos](https://research.nvidia.com/cosmos) |
 | NVIDIA DRIVE Platform | [developer.nvidia.com/drive](https://developer.nvidia.com/drive) |
 | Chain of Causation Dataset | [github.com/NVlabs/alpamayo/dataset](https://github.com/NVlabs/alpamayo) |
@@ -1079,6 +1320,8 @@ With all optimizations applied on NVIDIA DRIVE Thor, the 3B model achieves <50ms
 
 | Technique | Paper | Link |
 |:----------|:------|:-----|
+| DiT | Peebles & Xie, "Scalable Diffusion Models with Transformers" (ICCV 2023) | [arXiv:2212.09748](https://arxiv.org/abs/2212.09748) |
+| SigLIP | Zhai et al., "Sigmoid Loss for Language Image Pre-Training" (ICCV 2023) | [arXiv:2303.15343](https://arxiv.org/abs/2303.15343) |
 | DDPM | Ho et al., "Denoising Diffusion Probabilistic Models" (NeurIPS 2020) | [arXiv:2006.11239](https://arxiv.org/abs/2006.11239) |
 | DDIM | Song et al., "Denoising Diffusion Implicit Models" (ICLR 2021) | [arXiv:2010.02502](https://arxiv.org/abs/2010.02502) |
 | GQA | Ainslie et al., "GQA: Training Generalized Multi-Query Transformer Models" (EMNLP 2023) | [arXiv:2305.13245](https://arxiv.org/abs/2305.13245) |
@@ -1094,7 +1337,7 @@ With all optimizations applied on NVIDIA DRIVE Thor, the 3B model achieves <50ms
 ---
 
 <p align="center">
-  <sub>Built with data from the Alpamayo-R1 technical paper (NeurIPS 2025), NVIDIA Cosmos platform announcements, and cited autonomous driving research. All benchmark numbers sourced from the referenced publications. Model weights and dataset are subject to NVIDIA non-commercial research license.</sub>
+  <sub>Built with data from the Alpamayo-R1 technical paper (NeurIPS 2025), Alpamayo 1.5 Hugging Face model card and GitHub (Mar 2026), NVIDIA Cosmos platform announcements, and cited autonomous driving research. All benchmark numbers sourced from the referenced publications. Model weights and dataset are subject to NVIDIA non-commercial research license.</sub>
 </p>
 
 <p align="center">
